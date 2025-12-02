@@ -1,0 +1,9 @@
+node_modules
+frontend/node_modules
+dist
+build
+.git
+.env
+*.log
+backend/media
+backend/staticfiles
