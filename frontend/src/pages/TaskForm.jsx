@@ -64,8 +64,6 @@ export default function TaskForm({ onSubmit }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFieldErrors({});
-    setLoading(true);
-    // client-side date input validation (if 'start' < 'end')
     const payload = { ...formData }
     if (!payload.comparison) {
       delete payload.compare_start_date;
@@ -74,12 +72,15 @@ export default function TaskForm({ onSubmit }) {
       if (!payload.compare_start_date) payload.compare_start_date = null;
       if (!payload.compare_end_date) payload.compare_end_date = null;
     }
-
+    
+    // client-side date input validation (if 'start' < 'end')
     const coordCheck = validateCoords(payload);
     if (!coordCheck.ok) {
       setFieldErrors({ non_field_errors: coordCheck.message });
       return;
     }
+
+    setLoading(true);
 
     try {
       const res = await fetch(`${API_BASE}/api/tasks/init_task/`, {
@@ -133,7 +134,7 @@ export default function TaskForm({ onSubmit }) {
   // if OK
   if (successData) {
     // prevention agains naming (task_id or id)
-    const taskId = successData.task_id ?? successData.taskId ??successData.id ?? null;
+    const taskId = successData.task_id ?? successData.taskId ?? successData.id ?? null;
     return (
       <div style={{ textAlign: "center", marginTop: "3rem" }}>
         <h2>✅ Task submitted successfully!</h2>
