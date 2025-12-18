@@ -6,7 +6,7 @@ def get_sh_config():
     config = SHConfig()
     config.sh_client_id = os.getenv("SENTINEL_CLIENT_ID")
     config.sh_client_secret = os.getenv("SENTINEL_CLIENT_SECRET")
-    
+
     return config
 
 # --- Quality Control Thresholds ---
@@ -22,3 +22,4 @@ WARN_NAN_FRACT = 5.0
 
 # Other related constants for Sentinel Hub
 SENTINEL_MAX_CLOUD_COVER = 0.15     # 15% max
+

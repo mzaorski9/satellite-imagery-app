@@ -56,3 +56,4 @@ class DeleteTask(APIView):
             return Response({"error": f"Task ID: {task_id} not found."}, status=status.HTTP_404_NOT_FOUND)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)    
+
