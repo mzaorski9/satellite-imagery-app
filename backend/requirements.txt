@@ -5,7 +5,6 @@ djangorestframework_simplejwt==5.5.1
 redis==6.4.0
 celery==5.5.3
 gunicorn==23.0.0
-whitenoise==6.11.0
 
 # db/dev packages
 psycopg2-binary==2.9.10
@@ -17,3 +16,5 @@ matplotlib==3.9.4
 rasterio==1.4.3
 scipy==1.14.1
 
+# llm packages
+groq==1.0.0
