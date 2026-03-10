@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .bg-satellite-grid {
+    /* Base background color */
+    background-color: #f8fafc; 
+
+    /* Create the grid lines using 1px gradients */
+    background-image: 
+      linear-gradient(#e2e8f0 1px, transparent 1px),
+      linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+    
+    /* This defines the spacing of the grid squares */
+    background-size: 40px 40px;
+  }
+}
