@@ -1,23 +1,33 @@
 # Node
 frontend/node_modules/
 frontend/dist/
+
 # Python
-backend/__pycache__/
-backend/*.pyc
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+*.egg-info/
 backend/env/
 backend/.venv/
-# Django – user uploaded/generated files
+
+# Django generated files
 backend/media/
-backend/media/*
+backend/static/
+
+# Jupyter
+.ipynb_checkpoints/
+
 # Local envs
 .env
 backend/.env
 frontend/.env
 frontend/.env.*
+
 # OS/editor
 .DS_Store
 *.log
 .vscode/
 .idea/
-# Docker 
+
+# Docker
 .pid
