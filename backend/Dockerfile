@@ -40,7 +40,7 @@ COPY backend/requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip && pip install -r requirements.txt 
 
 # 5) Copy app code (after libs so code changes don't bust the heavy pip layer)
-COPY . /app
+COPY backend/ /app/
 
 # 6) Default command (overridden by docker-compose)
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

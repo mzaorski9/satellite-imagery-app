@@ -21,18 +21,36 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DJANGO_DEBUG", "1") in ("1", "True", "true")
+DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") 
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h] 
 
 if DEBUG and not ALLOWED_HOSTS: 
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost"] 
+  ALLOWED_HOSTS = ["127.0.0.1", "localhost"] 
 
 AUTH_USER_MODEL = 'accounts.User'   # for custom User model 
 
+# Celery settings (read from environment, passed by docker-compose)
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/0")
+
+# Origins allowed to ask our Django backend
+CSRF_TRUSTED_ORIGINS = [
+   f"http://{h}" for h in ALLOWED_HOSTS if h not in ("web", "backend")
+   ]
+
+# Basic JWT options
+from datetime import timedelta
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15), 
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,      # gives a new refresh token on every use
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
 # Application definition
 
@@ -46,7 +64,8 @@ INSTALLED_APPS = [
     'rest_framework',               # added app
     'rest_framework_simplejwt',     # added app
     'analysis',                     # added app 
-    'accounts'                      # added app
+    'accounts',                     # added app
+    'rest_framework_simplejwt.token_blacklist'
 ]
 
 REST_FRAMEWORK = {
@@ -57,7 +76,6 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -99,7 +117,8 @@ DATABASES = {
         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
-
+if not DATABASES["default"]["PASSWORD"] and not DEBUG:
+    raise ValueError("Database password must be set in production!")
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -136,16 +155,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'assets' # folder with files served in prod (by nginx/apache/cdn)
+STATIC_ROOT = BASE_DIR / 'static' # folder with files served in prod (by nginx/apache/cdn)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Celery settings (read from environment, passed by docker-compose)
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/0")
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"

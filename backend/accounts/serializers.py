@@ -2,8 +2,10 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth import get_user_model
+from .models import UserSettings
 
-User = get_user_model() # get default django User, or that set in AUTH_USER_MODEL
+# get default django User, or that set in AUTH_USER_MODEL
+User = get_user_model() 
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -25,13 +27,21 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("password2")
         password = validated_data.pop("password")
-        # print validated_data
         return User.objects.create_user(password=password, **validated_data)
     
+class UserSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSettings
+        fields = "__all__"
+        read_only_fields = ("created_at", "updated_at", "user")
+
 
 class UserSerializer(serializers.ModelSerializer):
+    # nested serializer to retrieve user settings easier on the frontend 
+    # via "user.settings.[...]"
+    settings = UserSettingsSerializer(read_only=True)
     class Meta:
         model = User
-        fields = ("id", "username", "email", "bio", "profile_image")
+        fields = ("id", "username", "email", "bio", "profile_image", "settings")
 
 

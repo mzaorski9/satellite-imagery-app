@@ -10,6 +10,4 @@ User = get_user_model()
 def create_user_settings(sender, instance, created, **kwargs):
     """Create a UserSettings instance when a User is created."""
     if created:
-        print(f"DEBUG: Creating settings for new user {instance.username}") # Add this for testing
-
         UserSettings.objects.create(user=instance)

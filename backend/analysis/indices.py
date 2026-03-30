@@ -1,110 +1,84 @@
-import uuid
 import numpy as np 
 from django.conf import settings
-import os
-from .sentinel_config import get_sh_config
-from .image_utils import save_image, compute_safe_size
+from .config import get_sh_config, SENTINEL_MAX_CLOUD_COVER          
+from .image_utils import compute_safe_size
 from sentinelhub import (
     SentinelHubRequest, 
     MimeType,
-    CRS, 
-    BBox, 
     DataCollection,
-    MosaickingOrder        
+    MosaickingOrder
 )
-import time
-from sentinelhub.exceptions import DownloadFailedException
-import requests
 
+EVALSCRIPTS = {
+    "NDVI": ("B04", "B08"),   # band1=red,  band2=NIR  → (NIR-red)/(NIR+red)
+    "NDMI": ("B11", "B08"),   # band1=SWIR, band2=NIR  → (NIR-SWIR)/(NIR+SWIR)
+}
 
-
-def calculate_ndvi(bbox, start_date, end_date, save=True) -> str:
+def calculate_index(index,
+                    bbox, 
+                    start_date, 
+                    end_date
+) -> np.array:
+    """
+    Calculates a vegetation index (e.g., NDVI, NDMI) for a given bounding box and date range using Sentinel-2 imagery.
+    Args:
+        index (str): The index to calculate, must be one of the keys in EVALSCRIPTS (e.g., "NDVI", "NDMI").
+        bbox: The bounding box for the area of interest (should be compatible with SentinelHubRequest).
+        start_date (str): The start date for the imagery (format: "YYYY-MM-DD").
+        end_date (str): The end date for the imagery (format: "YYYY-MM-DD").
+    Returns:
+        np.ndarray: Index raster with clouds masked as NaN.
+    """
+    
+    if not index or index not in EVALSCRIPTS:
+        raise KeyError(f"Unknown analysis type: {index}")
+     
     config = get_sh_config()
 
-    # image width/height/resolution (in pixels)
-    w, h, res = compute_safe_size(bbox, 2500, 60)
-    print(f"NDVI REQUEST: bbox={bbox}, dates=({start_date},{end_date}), size={w}x{h}, res={res}")
+    # image width/height/resolution [pixels]
+    w, h, _ = compute_safe_size(bbox, 2500, 60)
+
+    band1, band2 = EVALSCRIPTS[index] 
 
     request = SentinelHubRequest(
-        evalscript="""
-            // NDVI = (B08 - B04) / (B08 + B04)
-            // B08 = NIR, B04 = Red
-            function setup() {
-                return {
-                    input: ["B04", "B08"],
+        evalscript=f"""
+            function setup() {{
+                return {{
+                    input: ["{band1}", "{band2}", "SCL"],
                     output: [
-                        { id: "ndvi", bands: 1, sampleType: "FLOAT32" }
-                    ]
-                };
-            }
-            function evaluatePixel(sample) {
-                return [(sample.B08 - sample.B04) / (sample.B08 + sample.B04)];
-            }
+                        {{ id: "result", bands: 1, sampleType: "FLOAT32" }}
+                    ],
+                }};
+            }}
+            function evaluatePixel(sample) {{
+                // SCL values 3=cloud shadow, 8=cloud medium, 9=cloud high, 10=thin cirrus
+                const cloudy = [3, 8, 9, 10];
+                if (cloudy.includes(sample.SCL)) {{
+                    return [-9999]; // nodata value
+                }};
+                return [(sample.{band2} - sample.{band1}) / (sample.{band2} + sample.{band1})];
+            }}
         """,
+       
         input_data=[
             SentinelHubRequest.input_data(
                 data_collection=DataCollection.SENTINEL2_L2A,
                 time_interval=(start_date, end_date),
-                maxcc=0.15,
-                mosaicking_order=MosaickingOrder.LEAST_CC
-            )
+                maxcc=SENTINEL_MAX_CLOUD_COVER,
+                mosaicking_order=MosaickingOrder.LEAST_CC)
         ],
-        responses=[SentinelHubRequest.output_response(identifier="ndvi", response_format=MimeType.TIFF)],
+        responses=[SentinelHubRequest.output_response(identifier="result", response_format=MimeType.TIFF)],
         bbox=bbox,
         size=(w, h),
         config=config
     )
 
-    # ndvi raster as a one-dimensional numpy array [float32]
-    ndvi_data = request.get_data()[0].squeeze()
-    result_path = None
-    print("BEFORE SAVING, DATA:",  ndvi_data) 
-    if save:
-        filename = f"ndvi_{uuid.uuid4()}.png"
-        result_path = save_image(data=ndvi_data, 
-                        filename=filename, 
-                        title="NDVI Index", 
-                        cmap="RdYlGn", 
-                        vmin=-1,
-                        vmax=1,
-                        colorbar_label="NDVI",
-                        figsize=(10, 10),
-                        dpi=300)
-    return ndvi_data, result_path
+    # Index raster as 2D numpy array [float32], clouds masked as NaN
+    data = request.get_data()[0].squeeze()
+    data[data == -9999] = np.nan
+
+    if np.all(np.isnan(data)):
+        raise ValueError("Received empty response from Sentinel Hub — check API credentials or date range.")
+
+    return data
     
-def calculate_ndwi(bbox, *args):
-    ...
-
-
-def compare_images(arr1, arr2, save=True) -> str | np.ndarray:
-    '''
-    Compare two rasters pixel-by-pixel with the same resolution, extent and projection (CRS)
-    '''
-    diff_data = arr2 - arr1
-    filename = f"comparison_{uuid.uuid4()}.png"
-
-    # find min/max - NaN excluded
-    vmin = np.nanmin(diff_data)
-    vmax = np.nanmax(diff_data)
-    print("VMIN VMAX", vmin, vmax)
-    return save_image(diff_data, 
-                    filename, 
-                    title="Heatmap Index", 
-                    cmap="RdBu",
-                    vmin=vmin,
-                    vmax=vmax,  
-                    colorbar_label="Change index (negative → decrease, positive → increase)",
-                    figsize=(10, 10),
-                    dpi=300)
-
-    
-
-INDICES_ALLOWED = {
-    "ndvi": calculate_ndvi,
-    "ndwi": calculate_ndwi
-    }
-
-
-
-
-
