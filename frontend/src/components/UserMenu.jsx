@@ -1,15 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-
-function UserMenu({ onLogout }) {
+function UserMenu({ onLogout, username }) {
   const [open, setOpen] = useState(false);
   const ref = useRef();
-
   const navigate = useNavigate();
 
-
-  // close on outside click
+  // close menu on outside click
   useEffect(() => {
     function handle(e) {
       if (!ref.current) return;
@@ -19,77 +16,43 @@ function UserMenu({ onLogout }) {
     return () => document.removeEventListener("click", handle);
   }, []);
 
-  const username = localStorage.getItem("username") || "User";
-
   return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <button onClick={() => setOpen((s) => !s)} style={avatarStyle} aria-haspopup="true" aria-expanded={open}>
-        {username.slice(0, 1).toUpperCase()}
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((s) => !s)}
+        className="w-9 h-9 rounded-full bg-blue-700 text-white font-semibold hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors cursor-pointer"
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        {(username || "U").slice(0, 1).toUpperCase()}
       </button>
 
       {open && (
-        <div style={menuStyle} role="menu">
-          <div style={menuItemStyle} >{username}</div>
-          <button style={menuButtonStyle} onClick={() => alert("Settings (placeholder)")}>Settings</button>
-          <button style={menuButtonStyle} onClick={() => navigate("glossary")}>Glossary</button>
+        <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50 flex flex-col p-1">
+          <div className="px-3 py-2 text-sm font-semibold border-b border-gray-100 mb-1">
+            {username}
+          </div>
           <button
-            style={menuButtonStyle}
-            onClick={() => {
-              // clear stored auth and call onLogout if provided
-              localStorage.removeItem("access");
-              localStorage.removeItem("refresh");
-              localStorage.removeItem("username");
-              setOpen(false);
-              if (onLogout) onLogout();
-            }}
+            className="px-3 py-2 text-left text-sm rounded hover:bg-gray-100 transition-colors cursor-pointer"
+            onClick={() => navigate("settings")}
+          >
+            Settings
+          </button>
+          <button
+            className="px-3 py-2 text-left text-sm rounded hover:bg-gray-100 transition-colors cursor-pointer"
+            onClick={() => navigate("glossary")}
+          >
+            Glossary
+          </button>
+          <button
+            className="px-3 py-2 text-left text-sm rounded hover:bg-red-50 text-red-600 transition-colors mt-1 border-t border-gray-100 cursor-pointer"
+            onClick={() => { setOpen(false); onLogout?.(); }}
           >
             Logout
           </button>
         </div>
       )}
     </div>
-  );
-}
-
-
-const avatarStyle = {
-    width: 36,
-    height: 36,
-    borderRadius: "50%",
-    background: "#1f6feb",
-    color: "white",
-    border: "none",
-    cursor: "pointer",
-    fontWeight: 600,
-};
-
-const menuStyle = {
-    position: "absolute",
-    right: 0,
-    marginTop: 8,
-    background: "white",
-    border: "1px solid #ddd",
-    borderRadius: 6,
-    boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
-    zIndex: 1000,
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 160,
-    padding: 8,
-};
-
-const menuItemStyle = { 
-    padding: "8px 12px", 
-    fontWeight: 600,
-    borderBottom: "1px solid #ddd"
-};
-
-const menuButtonStyle = { 
-    padding: "8px 12px", 
-    textAlign: "left", 
-    border: "none", 
-    background: "none", 
-    cursor: "pointer" 
-};
+  )};
 
 export default UserMenu;

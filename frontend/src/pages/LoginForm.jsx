@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { API_BASE } from "../config.js"
-
+import { apiFetch } from "../apiFetch.js";
 
 function LoginForm({ onLogin }){
     const [form, setForm] = useState({ username: "", password: "" });
@@ -15,81 +14,123 @@ function LoginForm({ onLogin }){
         }));
     }
 
+    const checkForm = () => {
+        if (!form.username.trim() || !form.password.trim()) {
+            setErr(`Please complete your login credentials.`);
+            return false;
+        }
+        return true;
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErr(null);
+
+        if (!checkForm()) return;
+
         setLoading(true);
-        const res = await fetch(`${API_BASE}/api/accounts/login/`, {
-            method: "POST",
-            headers: {"Content-type": "application/json"},
-            body: JSON.stringify(form)
-            }
-        );
-        let data = null;
         try {
-            data = await res.json()
-        } catch (parseErr) {
-            setErr(`Unexpected response (HTTP ${res.status})`)
-            setLoading(false);
-            return;
+            const res = await apiFetch(`/api/accounts/login/`, {
+                method: "POST",
+                body: JSON.stringify(form)
+            });
+
+            let data = null;
+            try {
+                data = await res.json();
+            } catch (parseErr) {
+                setErr(`Unexpected response (HTTP ${res.status})`);
+                return;
+            }
+
+            if (!res.ok) {
+                const msg = (data && (data.detail || data.message || data.error)) || `HTTP ${res.status}`;
+                setErr(msg);
+                return;
+            }
+
+            // clear the password from RAM before leaving the page
+            setForm({ username: "", password: "" });
+            onLogin?.(data);
+
+        } catch (err) {
+            setErr(`Network error: ${err.message}`);
+        } finally {
+            setLoading(false);  
         }
-
-        if (!res.ok) {
-            // for debugging
-            const msg = (data && (data.detail || data.message || data.error)) ||
-                `HTTP ${res.status}`
-            
-            setErr(msg || `HTTP ${res.status}`);
-            setLoading(false);
-            return;
-        } 
-    
-        localStorage.setItem("access", data.access)
-        localStorage.setItem("refresh", data.refresh)
-
-
-        onLogin && onLogin(data);
+        
     };
-  
-    
+
+    const expired = new URLSearchParams(window.location.search).get("session_expired");
+
+    // strip "session_expired=1" query param from the URL
+    useEffect(() => {
+        if (expired) {
+            window.history.replaceState({}, "", "/");
+        }
+    }, []);
+
     return (
-       <form onSubmit={handleSubmit} style={{ maxWidth: 350, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
-            <h2 style={{ textAlign: "center" }}>Login</h2>
-            <label htmlFor="usrn">Username</label>
-            <input
-                id="usrn"
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-                autoComplete="username"
-                style={{ marginBottom: 12, padding: 8 }}
-            />
-            <label htmlFor="pwd">Password</label>
-            <input
-                id="pwd"
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                autoComplete="current-password"
-                style={{ marginBottom: 20, padding: 8 }}
-            />
-            <button type="submit" disabled={loading} style={{ padding: 10, marginBottom: 10 }}>
-                {loading ? "Logging in..." : "Login"}
-            </button>
-            {err && (
-                <div style={{ color: "red", marginBottom: 10 }}>
-                    Login failed. Check your credentials. 
-                    <pre style={{ color: "red", fontSize: 12 }}>{typeof err === "string" ? err : JSON.stringify(err, null, 2)}</pre>
+        <div className="flex min-h-screen items-center justify-center bg-cover bg-center"
+            style={{ backgroundImage: `url('/background.png')` }}
+        >
+            <div className="p-8 w-full max-w-sm relative overflow-hidden rounded-lg bg-white/30 backdrop-blur-md shadow-xl">
+                <div className="flex flex-col items-center">
+                    <img 
+                        src="/satellite.png"
+                        alt="Satellite Project Logo" 
+                        className="w-18 h-18 rounded-full mt-4"
+                    />
                 </div>
-            )}
-            <div style={{ textAlign: "center", marginTop: 10 }}>
-                <span>Not registered? </span>
-                <Link to="/register">Create an account</Link>
+                <form
+                    onSubmit={handleSubmit}
+                    className="w-full max-w-sm p-6 shadow-md space-y-4 rounded-lg"
+                >
+                    <h2 className="text-2xl font-bold text-center">Sign in</h2>
+                    {expired && (
+                        <p className="text-red-800 text-sm text-center mb-2">
+                            Your session expired. Please sign in again.
+                        </p>
+                    )}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Username</label>
+                        <input
+                            name="username"
+                            value={form.username}
+                            onChange={handleChange}
+                            className="w-full rounded border px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Password</label>
+                        <input
+                            name="password"
+                            type="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            className="w-full rounded border px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                        />
+                    </div>
+                    {err && (
+                        <div className="text-red-600 text-xs mt-1">{err}</div>
+                    )}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full rounded-lg bg-blue-700 py-2.5 text-white font-semibold tracking-wide hover:bg-blue-800 active:scale-[0.98] transition-all disabled:opacity-50"
+                    >
+                        {loading ? "Logging in..." : "Login"}
+                    </button>
+                    <p className="text-center text-sm">
+                        Not registered?{" "}
+                        <Link to="/register" className="text-blue-600 hover:underline">
+                            Create an account
+                        </Link>
+                    </p>
+                </form>
             </div>
-        </form>
-    );
-    
+        </div>
+    ); 
 }
 
 export default LoginForm;

@@ -10,7 +10,7 @@ export async function apiFetch(path, opts = {}) {
     ...(opts.headers || {}), 
   };
   // add Bearer token only if it is required
-  if (token && !path.includes(publicPaths)) {
+  if (token && !publicPaths.includes(path)) {
     headers["Authorization"] = `Bearer ${token}`;
   }
   
@@ -32,9 +32,8 @@ export async function apiFetch(path, opts = {}) {
         return apiFetch(path, opts);
       } else {
         localStorage.clear();
-        // "Hard redirection": total wipeout of stale and old user data 
-        window.location.href = "/login";
-        throw new Error("Session expired");
+        // back to login page with info about expired session
+        window.location.href = "/?session_expired=1";
       }
     }
   }

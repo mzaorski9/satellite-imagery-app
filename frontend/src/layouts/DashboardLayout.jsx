@@ -1,60 +1,39 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 import UserMenu from "../components/UserMenu";
-import WelcomeCard from "../components/WelcomeCard";
 import { useNavigate } from "react-router-dom";
 import { IoHome } from "react-icons/io5";
 
-// Minimal, unstyled dashboard layout. Place <Outlet /> where nested routes render.
-function DashboardLayout({ username, onLogout, children }) {
+/**
+ * DashboardLayout
+ * Main layout wrapper for dashboard pages with header, footer, and nested route support.
+ */
+function DashboardLayout({ username, onLogout }) {
     const navigate = useNavigate();
-    const goHome = () =>  navigate("/dashboard", { replace: true });
+    const goHome = () => navigate("/dashboard", { replace: true });
 
     return (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-            <header
-                style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    padding: "16px 24px 0 24px",
-                    borderBottom: "1px solid #ddd",
-                }}
-            >
-                <div style={{ display: "flex", padding: 20, alignItems: "center", gap: "16px" }}>
-                    <IoHome onClick={goHome} size={30} />
+        <div className="min-h-screen flex flex-col">
+            <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <div
+                    onClick={goHome}
+                    className="flex items-center gap-4 p-2 cursor-pointer hover:bg-gray-100 rounded-full transition-colors"
+                    title="Go Home"
+                >
+                    <IoHome size={26} className="text-gray-700" />
                 </div>
-                <div>
-                    <UserMenu onLogout={onLogout} />
-                </div>
+                <UserMenu onLogout={onLogout} username={username} />
             </header>
 
-            <main
-                style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: 24,
-                }}
-            >
-                {children ? children : <Outlet />}
+            <main className="flex-1 flex items-center justify-center p-6">
+                {/* render active component from parent */}
+                <Outlet />
             </main>
 
-            <footer
-                style={{
-                    padding: 12,
-                    textAlign: "center",
-                    borderTop: "1px solid #eee",
-                    fontSize: 13,
-                    color: "#666",
-                }}
-            >
+            <footer className="py-3 text-center border-t border-gray-100 text-xs text-gray-400">
                 © Satellite App
             </footer>
         </div>
     );
 }
+
 export default DashboardLayout;
-
-
