@@ -6,4 +6,4 @@ build
 .env
 *.log
 backend/media
-backend/staticfiles
+backend/static
