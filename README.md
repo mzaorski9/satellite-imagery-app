@@ -2,6 +2,14 @@
 
 > Analyze vegetation and moisture conditions anywhere on Earth using real Sentinel-2 satellite imagery — with AI-generated environmental interpretation.
 
+## Key Use Cases
+
+- **Detect Deforestation** — Identify illegal logging and land clearing in protected biomes by detecting rapid drops in canopy density across satellite passes, enabling rapid environmental response.
+- **Monitor Crop Health** — Pinpoint vegetation stress zones within agricultural fields to optimize irrigation schedules, reduce water waste, and maximize yield.
+- **Track Urban Sprawl** — Visualize the encroachment of urban development on natural landscapes, quantifying green space loss in growing metropolitan areas.
+- **Analyze Water Levels** — Monitor seasonal and long-term changes in reservoir and wetland water bodies to track drought impacts and water resource availability.
+- **Post-Fire Analysis** — Map wildfire burn intensity and vegetation recovery patterns to guide ecological restoration efforts and assess ecosystem damage.
+
 ---
 
 ![NDVI Example](docs/images/ndvi.png)
