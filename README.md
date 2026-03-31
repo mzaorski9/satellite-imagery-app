@@ -2,10 +2,13 @@
 
 > Analyze vegetation and moisture conditions anywhere on Earth using real Sentinel-2 satellite imagery — with AI-generated environmental interpretation.
 
+---
+
 ![NDVI Example](docs/images/ndvi.png)
 ![NDMI Example](docs/images/ndmi.png)
 ![NDVI Heatmap Example](docs/images/comparison_ndvi.png)
 ![NDMI Heatmap Example](docs/images/comparison_ndmi.png)
+
 
 Draw an area on the map → pick a date range → receive a high-resolution index image with pixel-level quality control and an LLM-generated interpretation of the environmental conditions.
 
@@ -54,8 +57,8 @@ Browser (React + Vite)
         │
       nginx  ──── static & media files
         │
-   Django + DRF                    PostgreSQL
-   Gunicorn (3 workers)   ──ORM──►
+   Django + DRF                    
+   Gunicorn (3 workers)   ──ORM──►   PostgreSQL
         │
       Redis  ◄──── Celery Worker
                       │
@@ -87,7 +90,7 @@ Browser (React + Vite)
 
 ```bash
 git clone https://github.com/mzaorski9/satellite-imagery-app.git
-cd SatelliteProject
+cd satellite-imagery-app
 cp .env.example .env   # fill in your credentials
 docker compose -f docker-compose.prod.yaml build
 docker compose -f docker-compose.prod.yaml up -d
