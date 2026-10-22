@@ -107,7 +107,6 @@ def build_metrics_str(
         + heatmap_section
     )
 
-
 def generate_ai_insight(metrics_str: str) -> str | None:
     """
     Generate a short AI-powered insight for a given index and metrics.
@@ -120,7 +119,7 @@ def generate_ai_insight(metrics_str: str) -> str | None:
     try:
         client = Groq(api_key=api_key)
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             messages=[
                 {
                     "role": "system",
@@ -131,7 +130,10 @@ def generate_ai_insight(metrics_str: str) -> str | None:
                     "content": f"Based on these metrics, provide a 2-sentence professional interpretation of the current conditions and any notable patterns (take the region into account):\n{metrics_str}"
                 }
             ],
-            max_tokens=150
+            # Allow room for reasoning as well as the two-sentence insight.
+            max_completion_tokens=1024,
+            reasoning_effort="low",
+            reasoning_format="hidden",
         )
         return completion.choices[0].message.content
     except Exception as e:

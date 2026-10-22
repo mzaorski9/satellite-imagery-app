@@ -10,6 +10,8 @@
 - **Analyze Water Levels** — Monitor seasonal and long-term changes in reservoir and wetland water bodies to track drought impacts and water resource availability.
 - **Post-Fire Analysis** — Map wildfire burn intensity and vegetation recovery patterns to guide ecological restoration efforts and assess ecosystem damage.
 
+[Watch the app teaser (MP4)](docs/videos/teaser_satellite.mp4)
+
 ---
 
 ![NDVI Example](docs/images/ndvi.png)
